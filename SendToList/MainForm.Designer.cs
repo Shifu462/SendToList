@@ -30,12 +30,14 @@
         {
             this.ListFriendlists = new System.Windows.Forms.ListBox();
             this.ListFriendsInList = new System.Windows.Forms.ListBox();
-            this.ButtonSend = new System.Windows.Forms.Button();
+            this.btnSendToList = new System.Windows.Forms.Button();
             this.readlabelChooseList = new System.Windows.Forms.Label();
             this.TextMessage = new System.Windows.Forms.TextBox();
             this.txtVideo = new System.Windows.Forms.TextBox();
             this.readlabelAttachments = new System.Windows.Forms.Label();
             this.btnAttach = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.btnSendAll = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // ListFriendlists
@@ -44,7 +46,7 @@
             this.ListFriendlists.Location = new System.Drawing.Point(19, 36);
             this.ListFriendlists.Margin = new System.Windows.Forms.Padding(10);
             this.ListFriendlists.Name = "ListFriendlists";
-            this.ListFriendlists.Size = new System.Drawing.Size(243, 277);
+            this.ListFriendlists.Size = new System.Drawing.Size(243, 212);
             this.ListFriendlists.TabIndex = 0;
             this.ListFriendlists.SelectedIndexChanged += new System.EventHandler(this.ListFriendlists_SelectedIndexChanged);
             // 
@@ -54,19 +56,19 @@
             this.ListFriendsInList.Location = new System.Drawing.Point(282, 36);
             this.ListFriendsInList.Margin = new System.Windows.Forms.Padding(10);
             this.ListFriendsInList.Name = "ListFriendsInList";
-            this.ListFriendsInList.Size = new System.Drawing.Size(216, 277);
+            this.ListFriendsInList.Size = new System.Drawing.Size(216, 212);
             this.ListFriendsInList.TabIndex = 1;
             // 
-            // ButtonSend
+            // btnSendToList
             // 
-            this.ButtonSend.Font = new System.Drawing.Font("Calibri", 20.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.ButtonSend.Location = new System.Drawing.Point(19, 705);
-            this.ButtonSend.Name = "ButtonSend";
-            this.ButtonSend.Size = new System.Drawing.Size(479, 66);
-            this.ButtonSend.TabIndex = 2;
-            this.ButtonSend.Text = "Отправить всем!";
-            this.ButtonSend.UseVisualStyleBackColor = true;
-            this.ButtonSend.Click += new System.EventHandler(this.ButtonSend_Click);
+            this.btnSendToList.Font = new System.Drawing.Font("Calibri", 20.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.btnSendToList.Location = new System.Drawing.Point(19, 259);
+            this.btnSendToList.Name = "btnSendToList";
+            this.btnSendToList.Size = new System.Drawing.Size(479, 54);
+            this.btnSendToList.TabIndex = 2;
+            this.btnSendToList.Text = "Отправить списку!";
+            this.btnSendToList.UseVisualStyleBackColor = true;
+            this.btnSendToList.Click += new System.EventHandler(this.btnSendToList_Click);
             // 
             // readlabelChooseList
             // 
@@ -81,7 +83,7 @@
             // TextMessage
             // 
             this.TextMessage.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.TextMessage.Location = new System.Drawing.Point(19, 326);
+            this.TextMessage.Location = new System.Drawing.Point(514, 350);
             this.TextMessage.Multiline = true;
             this.TextMessage.Name = "TextMessage";
             this.TextMessage.Size = new System.Drawing.Size(479, 140);
@@ -91,19 +93,17 @@
             // txtVideo
             // 
             this.txtVideo.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.txtVideo.Location = new System.Drawing.Point(19, 500);
+            this.txtVideo.Location = new System.Drawing.Point(514, 36);
             this.txtVideo.Multiline = true;
             this.txtVideo.Name = "txtVideo";
-            this.txtVideo.Size = new System.Drawing.Size(479, 145);
+            this.txtVideo.Size = new System.Drawing.Size(479, 212);
             this.txtVideo.TabIndex = 5;
-            this.txtVideo.Text = "https://vk.com/videos11920704?z=video-30316056_456283865%2Fpl_11920704_-2\r\nhttps:" +
-    "//vk.com/shifer462?z=photo11920704_456253846%2Falbum11920704_00%2Frev";
             // 
             // readlabelAttachments
             // 
             this.readlabelAttachments.AutoSize = true;
             this.readlabelAttachments.Font = new System.Drawing.Font("Calibri", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.readlabelAttachments.Location = new System.Drawing.Point(16, 478);
+            this.readlabelAttachments.Location = new System.Drawing.Point(511, 14);
             this.readlabelAttachments.Name = "readlabelAttachments";
             this.readlabelAttachments.Size = new System.Drawing.Size(216, 19);
             this.readlabelAttachments.TabIndex = 6;
@@ -112,28 +112,51 @@
             // btnAttach
             // 
             this.btnAttach.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.btnAttach.Location = new System.Drawing.Point(20, 651);
+            this.btnAttach.Location = new System.Drawing.Point(515, 259);
             this.btnAttach.Name = "btnAttach";
-            this.btnAttach.Size = new System.Drawing.Size(478, 34);
+            this.btnAttach.Size = new System.Drawing.Size(479, 54);
             this.btnAttach.TabIndex = 8;
             this.btnAttach.Text = "Прикрепить";
             this.btnAttach.UseVisualStyleBackColor = true;
             this.btnAttach.Click += new System.EventHandler(this.btnAttach_Click);
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Calibri", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.label1.Location = new System.Drawing.Point(511, 328);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(130, 19);
+            this.label1.TabIndex = 9;
+            this.label1.Text = "Текст сообщения:";
+            // 
+            // btnSendAll
+            // 
+            this.btnSendAll.Font = new System.Drawing.Font("Calibri", 20.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.btnSendAll.Location = new System.Drawing.Point(20, 350);
+            this.btnSendAll.Name = "btnSendAll";
+            this.btnSendAll.Size = new System.Drawing.Size(478, 140);
+            this.btnSendAll.TabIndex = 10;
+            this.btnSendAll.Text = "Отправить всем!";
+            this.btnSendAll.UseVisualStyleBackColor = true;
+            this.btnSendAll.Click += new System.EventHandler(this.btnSendAll_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(516, 783);
+            this.ClientSize = new System.Drawing.Size(1015, 514);
+            this.Controls.Add(this.btnSendAll);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.btnAttach);
             this.Controls.Add(this.readlabelAttachments);
             this.Controls.Add(this.txtVideo);
             this.Controls.Add(this.TextMessage);
             this.Controls.Add(this.readlabelChooseList);
-            this.Controls.Add(this.ButtonSend);
+            this.Controls.Add(this.btnSendToList);
             this.Controls.Add(this.ListFriendsInList);
             this.Controls.Add(this.ListFriendlists);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "MainForm";
             this.Text = "Главная | Баланс: ---";
             this.Load += new System.EventHandler(this.Main_Load);
@@ -146,12 +169,14 @@
 
         private System.Windows.Forms.ListBox ListFriendlists;
         private System.Windows.Forms.ListBox ListFriendsInList;
-        private System.Windows.Forms.Button ButtonSend;
+        private System.Windows.Forms.Button btnSendToList;
         private System.Windows.Forms.Label readlabelChooseList;
         private System.Windows.Forms.TextBox TextMessage;
         private System.Windows.Forms.TextBox txtVideo;
         private System.Windows.Forms.Label readlabelAttachments;
         private System.Windows.Forms.Button btnAttach;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button btnSendAll;
     }
 }
 

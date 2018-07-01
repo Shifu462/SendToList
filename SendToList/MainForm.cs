@@ -16,50 +16,22 @@ namespace SendToList
 
         List<MediaAttachment> Attachments = new List<MediaAttachment>();
 
-        private async void ButtonSend_Click(object sender, EventArgs e)
+        private async void btnSendToList_Click(object sender, EventArgs e)
         {
             int listIndex = int.Parse(ListFriendlists.SelectedItem.ToString().Split(':')[0]);
             var currentFriendlist = Program.Friendlist[listIndex];
 
-            string MessageTemplate = TextMessage.Text;
+            await SendToList(currentFriendlist, sender as Button);
+        }
 
-            int sentCount = 0;
-            foreach (var friend in currentFriendlist)
+        private async void btnSendAll_Click(object sender, EventArgs e)
+        {
+            var fullFriends = await Program.VK.Friends.GetAsync(new VkNet.Model.RequestParams.FriendsGetParams()
             {
-                string MessageToFriend = MessageTemplate.Replace("<firstname>", friend.FirstName);
+                Fields = VkNet.Enums.Filters.ProfileFields.FirstName
+            });
 
-                while (true)
-                {
-                    try
-                    {
-                        await Program.VK.Messages.SendAsync(new VkNet.Model.RequestParams.MessagesSendParams
-                        {
-                            Message = MessageToFriend,
-                            UserId = friend.Id,
-                            Attachments = Attachments
-                        });
-
-                        Program.ClearCaptchaInfo();
-                        ButtonSend.Text = $"Отправлено: {++sentCount}/{currentFriendlist.Count}";
-                        break;
-                    }
-                    catch (CaptchaNeededException captcha)
-                    {
-                        Program.LastCaptchaSid = captcha.Sid;
-                        Program.LastCaptchaUri = captcha.Img.AbsoluteUri;
-
-                        using (var captchaForm = new CaptchaForm(captcha.Img.AbsoluteUri))
-                            captchaForm.ShowDialog();
-
-                        if (Program.Anticaptcha != null)
-                            this.Text = $"Главная | Баланс: {Program.Anticaptcha.Balance.ToString()}";
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(ex.Message);
-                    }
-                }
-            }
+            await SendToList(fullFriends, sender as Button);
         }
 
         private async void Main_Load(object sender, EventArgs e)
@@ -127,5 +99,7 @@ namespace SendToList
 
             btnAttach.Text = $"Вложения: {Attachments.Count}";
         }
+
+        
     }
 }

@@ -70,7 +70,7 @@
             this.ButtonCaptcha.UseVisualStyleBackColor = true;
             this.ButtonCaptcha.Click += new System.EventHandler(this.ButtonCaptcha_Click);
             // 
-            // Captcha
+            // CaptchaForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -78,7 +78,8 @@
             this.Controls.Add(this.ButtonCaptcha);
             this.Controls.Add(this.TextCaptcha);
             this.Controls.Add(this.PictureCaptcha);
-            this.Name = "Captcha";
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.Name = "CaptchaForm";
             this.Text = "Captcha";
             ((System.ComponentModel.ISupportInitialize)(this.PictureCaptcha)).EndInit();
             this.ResumeLayout(false);

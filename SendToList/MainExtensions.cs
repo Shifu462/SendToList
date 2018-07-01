@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using VkNet.Enums.Filters;
+using VkNet.Exception;
 
 namespace SendToList
 {
@@ -25,6 +28,50 @@ namespace SendToList
                 });
 
                 Program.Friendlist.Add(list.Id, friends.ToList());
+            }
+        }
+
+        private async Task SendToList(IEnumerable<VkNet.Model.User> currentFriendlist, Button buttonSend)
+        {
+            string MessageTemplate = TextMessage.Text;
+
+            int allFriendsInListCount = currentFriendlist.Count();
+            int sentCount = 0;
+            foreach (var friend in currentFriendlist)
+            {
+                string MessageToFriend = MessageTemplate.Replace("<firstname>", friend.FirstName);
+
+                while (true)
+                {
+                    try
+                    {
+                        await Program.VK.Messages.SendAsync(new VkNet.Model.RequestParams.MessagesSendParams
+                        {
+                            Message = MessageToFriend,
+                            UserId = friend.Id,
+                            Attachments = Attachments
+                        });
+
+                        Program.ClearCaptchaInfo();
+                        buttonSend.Text = $"Отправлено: {++sentCount}/{allFriendsInListCount}";
+                        break;
+                    }
+                    catch (CaptchaNeededException captcha)
+                    {
+                        Program.LastCaptchaSid = captcha.Sid;
+                        Program.LastCaptchaUri = captcha.Img.AbsoluteUri;
+
+                        using (var captchaForm = new CaptchaForm(captcha.Img.AbsoluteUri))
+                            captchaForm.ShowDialog();
+
+                        if (Program.Anticaptcha != null)
+                            this.Text = $"Главная | Баланс: {Program.Anticaptcha.Balance.ToString()}";
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
+                }
             }
         }
 

@@ -63,7 +63,7 @@
             this.readlabelAllow.Text = "Разрешите приложению доступ и скопируйте ссылку из адресной строки.\r\nПример: http" +
     "s://oauth.vk.com/blank.html#code=d4943b464ac2b8";
             // 
-            // Code
+            // CodeForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -71,7 +71,8 @@
             this.Controls.Add(this.readlabelAllow);
             this.Controls.Add(this.ButtonCode);
             this.Controls.Add(this.TextCode);
-            this.Name = "Code";
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.Name = "CodeForm";
             this.Text = "Code";
             this.ResumeLayout(false);
             this.PerformLayout();
