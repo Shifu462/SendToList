@@ -6,7 +6,8 @@ using System.Text.RegularExpressions;
 using VkNet.Exception;
 using VkNet.Model.Attachments;
 using AnticaptchaApi;
-
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace SendToList
 {
@@ -15,50 +16,86 @@ namespace SendToList
         public MainForm() => InitializeComponent();
 
         List<MediaAttachment> Attachments = new List<MediaAttachment>();
+        bool sending = false;
+
+        public bool isListDistincted; // Equal at Load() to default checkbox.Checked value.
 
         private async void btnSendToList_Click(object sender, EventArgs e)
         {
-            int listIndex = int.Parse(ListFriendlists.SelectedItem.ToString().Split(':')[0]);
-            var currentFriendlist = Program.Friendlist[listIndex];
+            if (sending)
+                return;
+            sending = true;
 
-            await SendToList(currentFriendlist, sender as Button);
+            int listIndex = lstFriendLists.GetFriendlistId();
+            var chosenFriendList = Program.Friendlist[listIndex];
+
+            List<VkNet.Model.User> currentFriendList;
+            if (isListDistincted)
+            {
+                int excludeListId = lstExclude.GetFriendlistId();
+                currentFriendList = chosenFriendList.ExcludeList(Program.Friendlist[excludeListId]).ToList();
+            }
+            else currentFriendList = chosenFriendList;
+
+            await SendToListAsync(currentFriendList, sender as Button);
+
+            sending = false;
         }
 
         private async void btnSendAll_Click(object sender, EventArgs e)
         {
-            var fullFriends = await Program.VK.Friends.GetAsync(new VkNet.Model.RequestParams.FriendsGetParams()
+            if (sending)
+                return;
+            sending = true;
+
+            var fullFriends = await Program.VK.Friends.GetAsync(new VkNet.Model.RequestParams.FriendsGetParams
             {
                 Fields = VkNet.Enums.Filters.ProfileFields.FirstName
             });
 
-            await SendToList(fullFriends, sender as Button);
+            List<VkNet.Model.User> currentFriendList;
+            if (isListDistincted)
+            {
+                int excludeListId = lstExclude.GetFriendlistId();
+                currentFriendList = fullFriends.ExcludeList(Program.Friendlist[excludeListId]).ToList();
+            }
+            else currentFriendList = fullFriends.ToList();
+
+            await SendToListAsync(currentFriendList, sender as Button);
+
+            sending = false;
         }
 
         private async void Main_Load(object sender, EventArgs e)
         {
+            isListDistincted = checkExclude.Checked;
+
             string anticaptchaKey = File.Exists("anticaptcha_key.txt") ?
                 File.ReadAllText("anticaptcha_key.txt") : "";
 
             if (anticaptchaKey != string.Empty)
             {
                 Program.Anticaptcha = new AntiCaptcha(anticaptchaKey);
-                this.Text = $"Главная | Баланс: {Program.Anticaptcha.Balance.ToString()}";
+                this.Text = $"Главная | Баланс: {Program.Anticaptcha.Balance}";
             }
 
             Info.Auth();
-            await LoadLists();
+            await LoadListsAsync();
 
             foreach (var list in Program.CurrentFriendlists)
-                ListFriendlists.Items.Add($"{list.Id}: {list.Name}");
+            {
+                lstFriendLists.Items.Add($"{list.Id}: {list.Name}");
+                lstExclude.Items.Add(    $"{list.Id}: {list.Name}");
+            }
 
-            ListFriendlists.SetSelected(0, true);
+            lstFriendLists.SetSelected(0, true);
         }
 
         private void ListFriendlists_SelectedIndexChanged(object sender, EventArgs e)
         {
             ListFriendsInList.Items.Clear();
 
-            var IndexFriendist = int.Parse((ListFriendlists.SelectedItem as string).Split(':')[0]);
+            var IndexFriendist = int.Parse((lstFriendLists.SelectedItem as string).Split(':')[0]);
 
             foreach (var friend in Program.Friendlist[IndexFriendist])
                 ListFriendsInList.Items.Add($"{friend.FirstName} {friend.LastName}");
@@ -100,6 +137,15 @@ namespace SendToList
             btnAttach.Text = $"Вложения: {Attachments.Count}";
         }
 
-        
+        private void checkExclude_CheckedChanged(object sender, EventArgs e)
+        {
+            isListDistincted = lstExclude.Enabled = !isListDistincted; // Invert All
+        }
+
+        private void lstExclude_EnabledChanged(object sender, EventArgs e)
+        {
+            if (lstExclude.Enabled && lstExclude.Items.Count != 0)
+                lstExclude.SetSelected(0, true);
+        }
     }
 }

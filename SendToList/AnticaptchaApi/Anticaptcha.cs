@@ -1,15 +1,17 @@
 ﻿using System;
-using JsonRequest;
 using Newtonsoft.Json;
 using AnticaptchaApi.JsonApiRequest;
 using AnticaptchaApi.JsonApiResponse;
+using System.Threading.Tasks;
+using System.Net;
+using System.Threading;
+using System.Web.Script.Serialization;
+using System.IO;
 
 namespace AnticaptchaApi
 {
     class AntiCaptcha
     {
-        protected Request RequestWorker = new Request();
-
         protected string AnticaptchaKey { get; set; }
         public float Balance { get => GetBalance(); }
 
@@ -27,7 +29,7 @@ namespace AnticaptchaApi
             var req = new GetBalance { ClientKey = AnticaptchaKey };
 
             var reqJson = JsonConvert.SerializeObject(req);
-            var response = (BalanceResult) RequestWorker.Execute<BalanceResult>(ApiMethodUrl.GetBalance, reqJson, "POST");
+            var response = (BalanceResult)ExecuteRequest<BalanceResult>(ApiMethodUrl.GetBalance, reqJson, "POST");
 
             if (response.ErrorId != 0)
                 throw new Exception($"{response.ErrorCode} #{response.ErrorId}:\n {response.ErrorDescription}");
@@ -44,7 +46,8 @@ namespace AnticaptchaApi
             };
 
             var reqJson = JsonConvert.SerializeObject(req);
-            var response = (CreateTaskResult) RequestWorker.Execute<CreateTaskResult>(ApiMethodUrl.CreateTask, reqJson, "POST");
+
+            var response = (CreateTaskResult) ExecuteRequest<CreateTaskResult>(ApiMethodUrl.CreateTask, reqJson);
 
             if (response.ErrorId != 0)
                 throw new Exception($"{response.ErrorCode} #{response.ErrorId}:\n {response.ErrorDescription}");
@@ -61,12 +64,36 @@ namespace AnticaptchaApi
             };
 
             var reqJson = JsonConvert.SerializeObject(req);
-            var taskResult = (AnticaptchaTaskResult)RequestWorker.Execute<AnticaptchaTaskResult>(ApiMethodUrl.GetTaskResult, reqJson, "POST");
+
+            var taskResult = (AnticaptchaTaskResult) ExecuteRequest<AnticaptchaTaskResult>(ApiMethodUrl.GetTaskResult, reqJson);
 
             if (taskResult.ErrorId != 0)
                 throw new Exception($"{taskResult.ErrorCode} #{taskResult.ErrorId}:\n {taskResult.ErrorDescription}");
             
             return taskResult;
+        }
+
+        public static object ExecuteRequest<TT>(string url, string json, string method = "POST")
+        {
+            var jss = new JavaScriptSerializer();
+
+            var httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
+            httpWebRequest.ContentType = "application/json";
+            httpWebRequest.Method = method;
+
+            using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
+            {
+                streamWriter.Write(json);
+            }
+
+            var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+            string result;
+            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+            {
+                result = streamReader.ReadToEnd();
+            }
+
+            return jss.Deserialize<TT>(result);
         }
 
     }

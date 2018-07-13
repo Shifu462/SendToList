@@ -19,7 +19,9 @@ namespace SendToList
         public static AntiCaptcha Anticaptcha;
 
         public static VkCollection<VkNet.Model.FriendList>     CurrentFriendlists { get; set; } = null;
-        public static Dictionary<long, List<VkNet.Model.User>> Friendlist         { get; set; } = null;
+        public static Dictionary<long, List<VkNet.Model.User>> Friendlist { get; set; }         = null;
+
+        public static Dictionary<string, List<long>> UsersGotMessage { get; set; } = new Dictionary<string, List<long>>();
 
         public static void ClearCaptchaInfo()
         {

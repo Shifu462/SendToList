@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.ListFriendlists = new System.Windows.Forms.ListBox();
+            this.lstFriendLists = new System.Windows.Forms.ListBox();
             this.ListFriendsInList = new System.Windows.Forms.ListBox();
             this.btnSendToList = new System.Windows.Forms.Button();
             this.readlabelChooseList = new System.Windows.Forms.Label();
@@ -38,17 +38,19 @@
             this.btnAttach = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.btnSendAll = new System.Windows.Forms.Button();
+            this.lstExclude = new System.Windows.Forms.ListBox();
+            this.checkExclude = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
-            // ListFriendlists
+            // lstFriendLists
             // 
-            this.ListFriendlists.FormattingEnabled = true;
-            this.ListFriendlists.Location = new System.Drawing.Point(19, 36);
-            this.ListFriendlists.Margin = new System.Windows.Forms.Padding(10);
-            this.ListFriendlists.Name = "ListFriendlists";
-            this.ListFriendlists.Size = new System.Drawing.Size(243, 212);
-            this.ListFriendlists.TabIndex = 0;
-            this.ListFriendlists.SelectedIndexChanged += new System.EventHandler(this.ListFriendlists_SelectedIndexChanged);
+            this.lstFriendLists.FormattingEnabled = true;
+            this.lstFriendLists.Location = new System.Drawing.Point(19, 36);
+            this.lstFriendLists.Margin = new System.Windows.Forms.Padding(10);
+            this.lstFriendLists.Name = "lstFriendLists";
+            this.lstFriendLists.Size = new System.Drawing.Size(243, 212);
+            this.lstFriendLists.TabIndex = 0;
+            this.lstFriendLists.SelectedIndexChanged += new System.EventHandler(this.ListFriendlists_SelectedIndexChanged);
             // 
             // ListFriendsInList
             // 
@@ -86,7 +88,7 @@
             this.TextMessage.Location = new System.Drawing.Point(514, 350);
             this.TextMessage.Multiline = true;
             this.TextMessage.Name = "TextMessage";
-            this.TextMessage.Size = new System.Drawing.Size(479, 140);
+            this.TextMessage.Size = new System.Drawing.Size(648, 140);
             this.TextMessage.TabIndex = 4;
             this.TextMessage.Text = "Привет, <firstname>!";
             // 
@@ -96,7 +98,7 @@
             this.txtVideo.Location = new System.Drawing.Point(514, 36);
             this.txtVideo.Multiline = true;
             this.txtVideo.Name = "txtVideo";
-            this.txtVideo.Size = new System.Drawing.Size(479, 212);
+            this.txtVideo.Size = new System.Drawing.Size(382, 212);
             this.txtVideo.TabIndex = 5;
             // 
             // readlabelAttachments
@@ -114,7 +116,7 @@
             this.btnAttach.Font = new System.Drawing.Font("Calibri", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.btnAttach.Location = new System.Drawing.Point(515, 259);
             this.btnAttach.Name = "btnAttach";
-            this.btnAttach.Size = new System.Drawing.Size(479, 54);
+            this.btnAttach.Size = new System.Drawing.Size(381, 54);
             this.btnAttach.TabIndex = 8;
             this.btnAttach.Text = "Прикрепить";
             this.btnAttach.UseVisualStyleBackColor = true;
@@ -141,11 +143,35 @@
             this.btnSendAll.UseVisualStyleBackColor = true;
             this.btnSendAll.Click += new System.EventHandler(this.btnSendAll_Click);
             // 
+            // lstExclude
+            // 
+            this.lstExclude.Enabled = false;
+            this.lstExclude.FormattingEnabled = true;
+            this.lstExclude.Location = new System.Drawing.Point(919, 36);
+            this.lstExclude.Margin = new System.Windows.Forms.Padding(10);
+            this.lstExclude.Name = "lstExclude";
+            this.lstExclude.Size = new System.Drawing.Size(243, 212);
+            this.lstExclude.TabIndex = 11;
+            this.lstExclude.EnabledChanged += new System.EventHandler(this.lstExclude_EnabledChanged);
+            // 
+            // checkExclude
+            // 
+            this.checkExclude.AutoSize = true;
+            this.checkExclude.Location = new System.Drawing.Point(919, 17);
+            this.checkExclude.Name = "checkExclude";
+            this.checkExclude.Size = new System.Drawing.Size(124, 17);
+            this.checkExclude.TabIndex = 12;
+            this.checkExclude.Text = "Исключить список:";
+            this.checkExclude.UseVisualStyleBackColor = true;
+            this.checkExclude.CheckedChanged += new System.EventHandler(this.checkExclude_CheckedChanged);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1015, 514);
+            this.ClientSize = new System.Drawing.Size(1186, 514);
+            this.Controls.Add(this.checkExclude);
+            this.Controls.Add(this.lstExclude);
             this.Controls.Add(this.btnSendAll);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btnAttach);
@@ -155,7 +181,7 @@
             this.Controls.Add(this.readlabelChooseList);
             this.Controls.Add(this.btnSendToList);
             this.Controls.Add(this.ListFriendsInList);
-            this.Controls.Add(this.ListFriendlists);
+            this.Controls.Add(this.lstFriendLists);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "MainForm";
             this.Text = "Главная | Баланс: ---";
@@ -167,7 +193,7 @@
 
         #endregion
 
-        private System.Windows.Forms.ListBox ListFriendlists;
+        private System.Windows.Forms.ListBox lstFriendLists;
         private System.Windows.Forms.ListBox ListFriendsInList;
         private System.Windows.Forms.Button btnSendToList;
         private System.Windows.Forms.Label readlabelChooseList;
@@ -177,6 +203,8 @@
         private System.Windows.Forms.Button btnAttach;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnSendAll;
+        private System.Windows.Forms.ListBox lstExclude;
+        private System.Windows.Forms.CheckBox checkExclude;
     }
 }
 

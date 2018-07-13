@@ -46,9 +46,6 @@
     <Reference Include="JetBrains.Annotations, Version=11.1.0.0, Culture=neutral, PublicKeyToken=1010a0d8d6380325, processorArchitecture=MSIL">
       <HintPath>..\packages\JetBrains.Annotations.11.1.0\lib\net20\JetBrains.Annotations.dll</HintPath>
     </Reference>
-    <Reference Include="JsonRequest">
-      <HintPath>.\JsonRequest.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Extensions.DependencyInjection, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8df3f1eee85cc956, processorArchitecture=MSIL">
       <HintPath>..\packages\NetFx.Extensions.DependencyInjection.2.0.1\lib\net451\Microsoft.Extensions.DependencyInjection.dll</HintPath>
     </Reference>
@@ -80,6 +77,8 @@
       <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Primitives.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http.WebRequest" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -130,6 +129,7 @@
     <Compile Include="MainExtensions.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="MethodExtensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="CaptchaForm.resx">
