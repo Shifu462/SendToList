@@ -26,13 +26,13 @@ namespace SendToList
                 return;
             sending = true;
 
-            int listIndex = lstFriendLists.GetFriendlistId();
+            int listIndex = lstFriendLists.GetSelectedId();
             var chosenFriendList = Program.Friendlist[listIndex];
 
             List<VkNet.Model.User> currentFriendList;
             if (isListDistincted)
             {
-                int excludeListId = lstExclude.GetFriendlistId();
+                int excludeListId = lstExclude.GetSelectedId();
                 currentFriendList = chosenFriendList.ExcludeList(Program.Friendlist[excludeListId]).ToList();
             }
             else currentFriendList = chosenFriendList;
@@ -48,18 +48,13 @@ namespace SendToList
                 return;
             sending = true;
 
-            var fullFriends = await Program.VK.Friends.GetAsync(new VkNet.Model.RequestParams.FriendsGetParams
-            {
-                Fields = VkNet.Enums.Filters.ProfileFields.FirstName
-            });
-
             List<VkNet.Model.User> currentFriendList;
             if (isListDistincted)
             {
-                int excludeListId = lstExclude.GetFriendlistId();
-                currentFriendList = fullFriends.ExcludeList(Program.Friendlist[excludeListId]).ToList();
+                int excludedListId = lstExclude.GetSelectedId();
+                currentFriendList = Program.AllFriends.ExcludeList(Program.Friendlist[excludedListId]).ToList();
             }
-            else currentFriendList = fullFriends.ToList();
+            else currentFriendList = Program.AllFriends;
 
             await SendToListAsync(currentFriendList, sender as Button);
 
@@ -89,16 +84,20 @@ namespace SendToList
             }
 
             lstFriendLists.SetSelected(0, true);
+
+            await UpdateMessagesSentCount();
         }
 
-        private void ListFriendlists_SelectedIndexChanged(object sender, EventArgs e)
+        private async void ListFriendlists_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ListFriendsInList.Items.Clear();
+            lstFriendsInList.Items.Clear();
 
-            var IndexFriendist = int.Parse((lstFriendLists.SelectedItem as string).Split(':')[0]);
+            var indexFriendist = int.Parse((lstFriendLists.SelectedItem as string).Split(':')[0]);
 
-            foreach (var friend in Program.Friendlist[IndexFriendist])
-                ListFriendsInList.Items.Add($"{friend.FirstName} {friend.LastName}");
+            foreach (var friend in Program.Friendlist[indexFriendist])
+                lstFriendsInList.Items.Add($"{friend.FirstName} {friend.LastName}");
+
+            await UpdateMessagesSentCount();
         }
 
         private void btnAttach_Click(object sender, EventArgs e)
@@ -125,7 +124,6 @@ namespace SendToList
                     default:
                         MessageBox.Show("Ошибка! Неправильная ссылка. Номер: " + match.Index);
                         return;
-                        break;
                 }
 
                 currentAttach.OwnerId = int.Parse(attachParams[0]);
@@ -137,15 +135,26 @@ namespace SendToList
             btnAttach.Text = $"Вложения: {Attachments.Count}";
         }
 
-        private void checkExclude_CheckedChanged(object sender, EventArgs e)
+        private async void checkExclude_CheckedChanged(object sender, EventArgs e)
         {
             isListDistincted = lstExclude.Enabled = !isListDistincted; // Invert All
+            await UpdateMessagesSentCount();
         }
 
         private void lstExclude_EnabledChanged(object sender, EventArgs e)
         {
             if (lstExclude.Enabled && lstExclude.Items.Count != 0)
                 lstExclude.SetSelected(0, true);
+        }
+
+        private async void txtMessage_TextChanged(object sender, EventArgs e)
+        {
+            await UpdateMessagesSentCount();
+        }
+
+        private async void lstExclude_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            await UpdateMessagesSentCount();
         }
     }
 }
