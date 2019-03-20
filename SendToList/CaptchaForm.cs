@@ -1,34 +1,34 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using AnticaptchaApi.JsonApiResponse;
 
 namespace SendToList
 {
-    public partial class CaptchaForm : Form
+	public partial class CaptchaForm : Form
     {
-        private readonly string _captchaUrl;
+        private string CaptchaUrl { get; }
+
         public double CaptchaCost { get; private set; } = 0;
 
-        public CaptchaForm(string CaptchaUrl)
+        public CaptchaForm(string captchaUrl)
         {
-            InitializeComponent();
-            _captchaUrl = CaptchaUrl;
+			this.InitializeComponent();
 
-            if (Program.Anticaptcha == null || Program.Anticaptcha.Balance < 0.005)
+			this.CaptchaUrl = captchaUrl;
+
+            if (AnticaptchaWorker.Api == null || AnticaptchaWorker.Api.GetBalance() < 0.005)
                 return;
 
-            txtCaptcha.Enabled = btnCaptcha.Enabled = false;
-            this.Text = $"Капча | Anticaptcha начала решение!";
+			this.txtCaptcha.Enabled = this.btnCaptcha.Enabled = false;
+            this.Text = "Капча | Anticaptcha начала решение!";
 
-            Thread captchaSolver = new Thread(new ThreadStart(SolveAndSubmitCaptcha));
-            captchaSolver.Start();
+			Task.Factory.StartNew(this.SolveAndSubmitCaptcha); // TODO: затестить
         }
 
-        private async void CaptchaForm_Load(object sender, EventArgs e)
+        private void CaptchaForm_Load(object sender, EventArgs e)
         {
-            PictureCaptcha.ImageLocation = _captchaUrl;
+			this.PictureCaptcha.ImageLocation = this.CaptchaUrl;
         }
 
 
@@ -40,21 +40,19 @@ namespace SendToList
 
         private void SolveAndSubmitCaptcha()
         {
-            string solvedCaptcha = SolveCaptcha(_captchaUrl);
-            Program.LastCaptcha = solvedCaptcha.Trim();
+            string solvedCaptcha = this.SolveCaptcha(this.CaptchaUrl);
+            AnticaptchaWorker.LastCaptcha = solvedCaptcha.Trim();
         }
 
         private string SolveCaptcha(string captchaUrl)
         {
-            int taskId = int.MinValue; // random default value
-
-            taskId = Program.Anticaptcha.CreateTask(captchaUrl);
+            int taskId = AnticaptchaWorker.Api.CreateTask(captchaUrl);
 
             var tr = new AnticaptchaTaskResult();
             while (!tr.IsDone)
-                tr = Program.Anticaptcha.GetTaskResult(taskId);
+                tr = AnticaptchaWorker.Api.GetTaskResult(taskId);
 
-            CaptchaCost = tr.Cost;
+			this.CaptchaCost = tr.Cost;
             return tr.Solution.Text;
         }
 
@@ -64,14 +62,14 @@ namespace SendToList
 
         private void ButtonCaptcha_Click(object sender, EventArgs e)
         {
-            Program.LastCaptcha = txtCaptcha.Text.Trim();
+            AnticaptchaWorker.LastCaptcha = this.txtCaptcha.Text.Trim();
             this.Close();
         }
 
         private void TextCaptcha_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter && Program.Anticaptcha == null)
-                ButtonCaptcha_Click(this, new EventArgs());
+            if (e.KeyCode == Keys.Enter && AnticaptchaWorker.Api == null)
+				this.ButtonCaptcha_Click(this, new EventArgs());
         }
 
     }

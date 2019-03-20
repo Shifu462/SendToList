@@ -1,197 +1,175 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using VkNet.Enums.Filters;
+using SendToList.Extensions;
 using VkNet.Exception;
 
 namespace SendToList
 {
-    public partial class MainForm
-    {
-        const string RegexAttachmentLinkExpression = @"(video|photo)[-]?\d+_\d+";
-        Regex RegexAttachment = new Regex(RegexAttachmentLinkExpression);
+	public partial class MainForm
+	{
+		private async Task UpdateMessagesSentCount()
+		{
+			var SentMessagesList = MessageCache.Instance();
+
+			var message = SentMessagesList[this.txtMessage.Text];
+			var alreadySentUsers = message != null ? message.UserIds : new List<long>();
+
+			var chosenFriendlist = VkApp.Friendlist[this.lstFriendLists.GetSelectedId()].ToLong();
+
+			int allCount = VkApp.AllFriends.Count;
+			int chosenCount = chosenFriendlist.Count();
+
+			var allNotSent = VkApp.AllFriends.ToLong().Except(alreadySentUsers);
+			var chosenNotSent = chosenFriendlist.Except(alreadySentUsers);
+
+			int chosenSentCount = chosenCount - chosenNotSent.Count();
+
+			if (this.checkExclude.Checked)
+			{
+				var excludedList = VkApp.Friendlist[this.lstExclude.GetSelectedId()].ToLong();
+
+				allNotSent = allNotSent.Except(excludedList);
+				chosenNotSent = chosenNotSent.Except(excludedList);
+
+				allCount = VkApp.AllFriends.ToLong().Except(excludedList).Count();
+
+				if (this.lstFriendLists.GetSelectedId() == this.lstExclude.GetSelectedId())
+				{
+					chosenSentCount = 0;
+					chosenCount = 0;
+				}
+			}
+
+			int allSentCount = allCount - allNotSent.Count();
+
+			this.lblSentAllCount.Text = $"{allSentCount}/{allCount} друзьям " +
+				$"(не отправлено {allNotSent.Count()})";
+
+			this.lblSentToListCount.Text = $"{chosenSentCount}/{chosenCount} " +
+				$"друзьям из выбранного списка " +
+				$"(не отправлено {chosenNotSent.Count()})";
+		}
 
 
-        private async Task UpdateMessagesSentCount()
-        {
-            var SentMessagesList = JsonModel.JsonMessageList.Instance();
+		private async Task SendToListAsync(IEnumerable<VkNet.Model.User> currentFriendlist, Button buttonSend)
+		{
+			var MessagesToSaveList = MessageCache.Instance();
 
-            var message = SentMessagesList.FindMessageByText(txtMessage.Text);
-            var alreadySentUsers = message != null ? message.UserIds : new List<long>();
+			string _messageTemplate = this.txtMessage.Text.Trim();
 
-            var chosenFriendlist = Program.Friendlist[lstFriendLists.GetSelectedId()].ToLong();
+			int allFriendsInListCount = currentFriendlist.Count();
+			int sentCount = 0;
 
-            int allCount = Program.AllFriends.Count;
-            int chosenCount = chosenFriendlist.Count();
+			foreach (var friend in currentFriendlist)
+			{
+				if (MessagesToSaveList.AlreadySentMessage(_messageTemplate, friend.Id))
+					continue;
 
-            var allNotSent = Program.AllFriends.ToLong().Except(alreadySentUsers);
-            var chosenNotSent = chosenFriendlist.Except(alreadySentUsers);
+				string messageToCurrentFriend = _messageTemplate.Replace("<firstname>", friend.FirstName);
 
-            int chosenSentCount = chosenCount - chosenNotSent.Count();
+				var isSent = await this.TrySendMessage(messageToCurrentFriend, friend.Id);
 
-            if (checkExclude.Checked)
-            {
-                var excludedList = Program.Friendlist[lstExclude.GetSelectedId()].ToLong();
+				if (isSent)
+				{
+					MessagesToSaveList.Add(_messageTemplate, friend.Id);
+					sentCount++;
+					await this.UpdateMessagesSentCount();
+				}
 
-                allNotSent = allNotSent.Except(excludedList);
-                chosenNotSent = chosenNotSent.Except(excludedList);
+				AnticaptchaWorker.ClearCaptchaInfo();
 
-                allCount = Program.AllFriends.ToLong().Except(excludedList).Count();
+				if (AnticaptchaWorker.Api != null)
+					this.Text = $"Главная | Баланс: {AnticaptchaWorker.Api.GetBalance()} | {buttonSend.Text}";
+				else
+					this.Text = $"Главная | Баланс: --- | {buttonSend.Text}";
+			}
+		}
 
-                if (lstFriendLists.GetSelectedId() == lstExclude.GetSelectedId())
-                {
-                    chosenSentCount = 0;
-                    chosenCount = 0;
-                }
-            }
+		private async Task<bool> TrySendMessage(string messageText, long userId)
+		{
+			while (true)
+			{
+				try
+				{
+					VkApp.Api.Messages.Send(new VkNet.Model.RequestParams.MessagesSendParams
+					{
+						Message = messageText,
+						UserId = userId,
+						Attachments = Attachments,
+						CaptchaKey = AnticaptchaWorker.LastCaptcha,
+						CaptchaSid = AnticaptchaWorker.LastCaptchaSid,
 
-            int allSentCount = allCount - allNotSent.Count();
+					});
 
-            lblSentAllCount.Text = $"{allSentCount}/{allCount} друзьям " +
-                $"(не отправлено {allNotSent.Count()})";
+					return true;
+				}
+				catch (CaptchaNeededException captcha)
+				{
+					AnticaptchaWorker.LastCaptchaSid = captcha.Sid;
+					AnticaptchaWorker.LastCaptchaUri = captcha.Img.AbsoluteUri;
 
-            lblSentToListCount.Text = $"{chosenSentCount}/{chosenCount} " +
-                $"друзьям из выбранного списка " +
-                $"(не отправлено {chosenNotSent.Count()})";
-        }
+					var anticaptchaBalance = AnticaptchaWorker.Api.GetBalance(); // TODO: NullReferenceException.
 
-        private static async Task LoadListsAsync()
-        {
-            Program.AllFriends = (await Program.VK.Friends.GetAsync(new VkNet.Model.RequestParams.FriendsGetParams
-            {
-                Fields = ProfileFields.FirstName
-            })).ToList();
-            Program.CurrentFriendlists = await Program.VK.Friends.GetListsAsync(returnSystem: true);
-            Program.Friendlist = new Dictionary<long, List<VkNet.Model.User>>();
-            
-            foreach (var list in Program.CurrentFriendlists)
-            {
-                var friends = await Program.VK.Friends.GetAsync(new VkNet.Model.RequestParams.FriendsGetParams
-                {
-                    ListId = list.Id,
-                    Fields = ProfileFields.FirstName | ProfileFields.LastName
-                });
+					if (AnticaptchaWorker.Api != null)
+						this.Text = $"Главная | Баланс: {anticaptchaBalance} | Решается капча";
+					else
+						this.Text = $"Главная | Баланс: --- | Решается капча";
 
-                Program.Friendlist.Add(list.Id, friends.ToList());
-            }
-        }
+					using (var captchaForm = new CaptchaForm(captcha.Img.AbsoluteUri))
+					{
+						if (AnticaptchaWorker.Api == null && (true || anticaptchaBalance < 0.005)) // TODO: чего нахуй
+							captchaForm.ShowDialog();
 
-        private async Task SendToListAsync(IEnumerable<VkNet.Model.User> currentFriendlist, Button buttonSend)
-        {
-            var MessagesToSaveList = JsonModel.JsonMessageList.Instance();
+						// Wait
+						while (AnticaptchaWorker.LastCaptcha == null)
+							continue;
+					}
 
-            string MessageTemplate = txtMessage.Text;
+					if (AnticaptchaWorker.Api != null)
+						this.Text = $"Главная | Баланс: {AnticaptchaWorker.Api.GetBalance()} | {AnticaptchaWorker.LastCaptcha}";
+				}
+				catch (TooManyRequestsException)
+				{
+					this.Text = $"Главная | Баланс: {AnticaptchaWorker.Api.GetBalance()} | Слишком много запросов в секунду.";
+					await Task.Delay(1000);
+				}
+				catch (TooMuchSentMessagesException ex)
+				{
+					string errormessage = $"Лимит на рассылку исчерпан. Рассылка будет остановлена. \n\n" +
+						$"  Код ошибки: {ex.ErrorCode}\n{ex.Message}";
+					MessageBoxExt.ShowInNewThread(errormessage);
+					return false;
+				}
+				catch (AccessDeniedException ex)
+				{
+					string errormessage = $"Отказано в доступе. \nПользователь ID: {userId}\n\n" +
+						$"  Код ошибки: {ex.ErrorCode}\n{ex.Message}";
 
-            int allFriendsInListCount = currentFriendlist.Count();
-            int sentCount = 0;
+					MessageBoxExt.ShowInNewThread(errormessage);
+					return false;
+				}
+				catch (UnknownException ex)
+				{
+					string errormessage = $"Неизвестная ошибка на стороне VK. \nПользователь ID: {userId}\n\n" +
+						$"  Код ошибки: {ex.ErrorCode}\n{ex.Message}";
 
-            foreach (var friend in currentFriendlist)
-            {
-                if (MessagesToSaveList.AlreadySentMessage(MessageTemplate, friend.Id))
-                    continue;
+					MessageBoxExt.ShowInNewThread(errormessage);
+					return false;
+				}
+				catch (Exception ex)
+				{
+					string errormessage = $"Неизвестная общая ошибка. \nПользователь ID: {userId}\n\n" +
+						$"  {ex.Message}";
 
-                string messageToCurrentFriend = MessageTemplate.Replace("<firstname>", friend.FirstName);
+					MessageBoxExt.ShowInNewThread(errormessage);
+					return false;
+				}
+			}
+		}
 
-                var isSent = await TrySendMessage(messageToCurrentFriend, friend.Id);
 
-                if (isSent)
-                {
-                    MessagesToSaveList.Add(MessageTemplate, friend.Id);
-                    sentCount++;
-                    await UpdateMessagesSentCount();
-                }
-
-                Program.ClearCaptchaInfo();
-                if (Program.Anticaptcha != null)
-                    this.Text = $"Главная | Баланс: {Program.Anticaptcha.Balance} | {buttonSend.Text}";
-                else
-                    this.Text = $"Главная | Баланс: --- | {buttonSend.Text}";
-            }
-        } 
-
-        private async Task<bool> TrySendMessage(string messageText, long userId)
-        {
-            while (true)
-            {
-                try
-                {
-                    Program.VK.Messages.Send(new VkNet.Model.RequestParams.MessagesSendParams
-                    {
-                        Message = messageText,
-                        UserId = userId,
-                        Attachments = Attachments,
-                        CaptchaKey = Program.LastCaptcha,
-                        CaptchaSid = Program.LastCaptchaSid
-                    });
-
-                    return true;
-                }
-                catch (CaptchaNeededException captcha)
-                {
-                    Program.LastCaptchaSid = captcha.Sid;
-                    Program.LastCaptchaUri = captcha.Img.AbsoluteUri;
-
-                    if (Program.Anticaptcha != null)
-                        this.Text = $"Главная | Баланс: {Program.Anticaptcha.Balance} | Решается капча";
-                    else
-                        this.Text = $"Главная | Баланс: --- | Решается капча";
-
-                    using (var captchaForm = new CaptchaForm(captcha.Img.AbsoluteUri))
-                    {
-                        if (Program.Anticaptcha == null && (true || Program.Anticaptcha.Balance < 0.005))
-                            captchaForm.ShowDialog();
-
-                        // Wait
-                        while (Program.LastCaptcha == null)
-                            continue;
-                    }
-
-                    if (Program.Anticaptcha != null)
-                        this.Text = $"Главная | Баланс: {Program.Anticaptcha.Balance} | {Program.LastCaptcha}";
-                }
-                catch (TooManyRequestsException)
-                {
-                    this.Text = $"Главная | Баланс: {Program.Anticaptcha.Balance} | Слишком много запросов в секунду.";
-                    await Task.Delay(1000);
-                }
-                catch (TooMuchSentMessagesException ex)
-                {
-                    string errormessage = $"Лимит на рассылку исчерпан. Рассылка будет остановлена. \n\n" +
-                        $"  Код ошибки: {ex.ErrorCode}\n{ex.Message}";
-                    MessageBox.Show(errormessage);
-                    return false;
-                }
-                catch (AccessDeniedException ex)
-                {
-                    string errormessage = $"Отказано в доступе. \nПользователь ID: {userId}\n\n" +
-                        $"  Код ошибки: {ex.ErrorCode}\n{ex.Message}";
-
-                    new Thread(() => MessageBox.Show(errormessage)).Start();
-                    return false;
-                }
-                catch (UnknownException ex)
-                {
-                    string errormessage = $"Неизвестная ошибка на стороне VK. \nПользователь ID: {userId}\n\n" +
-                        $"  Код ошибки: {ex.ErrorCode}\n{ex.Message}";
-
-                    new Thread(() => MessageBox.Show(errormessage)).Start();
-                    return false;
-                }
-                catch (Exception ex)
-                {
-                    string errormessage = $"Неизвестная общая ошибка. \nПользователь ID: {userId}\n\n" +
-                        $"  {ex.Message}";
-
-                    new Thread(() => MessageBox.Show(errormessage)).Start();
-                    return false;
-                }
-            }
-        }
-        
-
-    }
+	}
 }

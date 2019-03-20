@@ -107,6 +107,7 @@
     <Compile Include="AnticaptchaApi\JsonApiResponse\AnticaptchaJsonResult.cs" />
     <Compile Include="AnticaptchaApi\JsonApiResponse\GetBalanceResult.cs" />
     <Compile Include="AnticaptchaApi\JsonCaptchaTask\ImageToTextTask.cs" />
+    <Compile Include="AnticaptchaWorker.cs" />
     <Compile Include="CaptchaForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -119,8 +120,11 @@
     <Compile Include="CodeForm.Designer.cs">
       <DependentUpon>CodeForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Info.cs" />
-    <Compile Include="JsonMessageList.cs" />
+    <Compile Include="VkApp.cs" />
+    <Compile Include="Extensions\CollectionExt.cs" />
+    <Compile Include="Extensions\MessageBoxExt.cs" />
+    <Compile Include="Extensions\StringExt.cs" />
+    <Compile Include="MessageCache.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -130,7 +134,7 @@
     <Compile Include="MainExtensions.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MethodExtensions.cs" />
+    <Compile Include="Extensions\WinFormsExt.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="CaptchaForm.resx">
