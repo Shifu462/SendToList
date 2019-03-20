@@ -4,8 +4,8 @@ using AnticaptchaApi;
 namespace SendToList
 {
 	public static class AnticaptchaWorker
-    {
-        public static long? LastCaptchaSid { get; set; } = null;
+	{
+		public static long? LastCaptchaSid { get; set; } = null;
 		public static string LastCaptchaUri { get; set; } = null;
 		public static string LastCaptcha { get; set; } = null;
 
@@ -32,5 +32,5 @@ namespace SendToList
 			LastCaptchaUri = null;
 			LastCaptcha = null;
 		}
-    }
+	}
 }

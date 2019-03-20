@@ -45,7 +45,7 @@ namespace SendToList
 
 				try
 				{
-					VkApp.Api.Authorize(new ApiAuthParams { AccessToken = VkApp.AccessToken });
+					VkApp.Api.Authorize(new VkNet.Model.ApiAuthParams { AccessToken = VkApp.AccessToken });
 				}
 				catch (Exception ex)
 				{

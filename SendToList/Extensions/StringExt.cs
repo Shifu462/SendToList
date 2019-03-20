@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 using VkNet.Model.Attachments;
 
@@ -42,7 +41,7 @@ namespace SendToList.Extensions
 						break;
 
 					case "wall":
-						currentAttach = new VkNet.Model.Post();
+						currentAttach = new Post();
 						break;
 
 					default:
