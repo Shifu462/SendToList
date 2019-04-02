@@ -73,7 +73,7 @@
 			this.Controls.Add(this.TextCode);
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
 			this.Name = "CodeForm";
-			this.Text = "Code";
+			this.Text = "Авторизация пользователя";
 			this.ResumeLayout(false);
 			this.PerformLayout();
 

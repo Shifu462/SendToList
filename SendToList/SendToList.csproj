@@ -135,6 +135,7 @@
     <Compile Include="AnticaptchaApi\JsonApiResponse\GetBalanceResult.cs" />
     <Compile Include="AnticaptchaApi\JsonCaptchaTask\ImageToTextTask.cs" />
     <Compile Include="AnticaptchaWorker.cs" />
+    <Compile Include="AuthUrlBuilder.cs" />
     <Compile Include="CaptchaForm.cs">
       <SubType>Form</SubType>
     </Compile>

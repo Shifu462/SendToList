@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net;
 using System.Windows.Forms;
 using Newtonsoft.Json;
@@ -10,7 +11,7 @@ namespace SendToList
 {
 	public static class VkApp
 	{
-		private const int AppID = 6427400;
+		private const int AppId = 6427400;
 		public const string AppSecret = "N9v5eAzZcwb6W9GrH25g";
 		public const string Scope = "friends,users,photo,video,offline";
 
@@ -23,27 +24,23 @@ namespace SendToList
 
 		private static Random RandomGenerator = new Random();
 
-		public static VkCollection<VkNet.Model.FriendList> CurrentFriendlists { get; set; } = null;
-		public static IDictionary<long, List<VkNet.Model.User>> Friendlist { get; set; } = null;
-		public static IList<VkNet.Model.User> AllFriends { get; set; } = null;
+		public static VkCollection<VkNet.Model.FriendList> CurrentFriendlists { get; set; }
+		public static IDictionary<long, List<VkNet.Model.User>> Friendlist { get; set; }
+		public static IList<VkNet.Model.User> AllFriends { get; set; }
 
 		public static int GetRandomId() => RandomGenerator.Next(int.MaxValue);
 
 		public static string Auth()
 		{
-			System.Diagnostics.Process.Start(
-				  $"http://api.vk.com/oauth/authorize" +
-				  $"?client_id={VkApp.AppID}&scope={VkApp.Scope}");
-
-			new CodeForm().ShowDialog();
-
-			string lnkToken =
-				$"https://api.vk.com/oauth/access_token" +
-				$"?client_id={VkApp.AppID}&client_secret={VkApp.AppSecret}&code={VkApp.Code}";
+			Process.Start( AuthUrlBuilder.User.CreateAuthUrl(VkApp.AppId, VkApp.Scope) );
+			
+			using( var codeForm = new CodeForm() )
+				codeForm.ShowDialog();
 
 			using (var webClient = new WebClient())
 			{
-				string response = webClient.DownloadString(lnkToken);
+				string tokenUrl = AuthUrlBuilder.User.CreateTokenUrl(VkApp.AppId, VkApp.AppSecret, VkApp.Code);
+				string response = webClient.DownloadString(tokenUrl);
 				var jsonResponse = JsonConvert.DeserializeObject<VkJsonTokenResponse>(response);
 				VkApp.AccessToken = jsonResponse.access_token;
 
