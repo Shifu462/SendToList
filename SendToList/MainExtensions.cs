@@ -12,9 +12,7 @@ namespace SendToList
 	{
 		private async Task UpdateMessagesSentCount()
 		{
-			var SentMessagesList = MessageCache.Instance();
-
-			var message = SentMessagesList[this.txtMessage.Text];
+			var message = this.MessageCache[this.txtMessage.Text];
 			var alreadySentUsers = message != null ? message.UserIds : new List<long>();
 
 			var chosenFriendlist = VkApp.Friendlist[this.lstFriendLists.GetSelectedId()].ToLong();
@@ -56,8 +54,6 @@ namespace SendToList
 
 		private async Task SendToListAsync(IEnumerable<VkNet.Model.User> currentFriendlist, Button buttonSend)
 		{
-			var MessagesToSaveList = MessageCache.Instance();
-
 			string _messageTemplate = this.txtMessage.Text.Trim();
 
 			int allFriendsInListCount = currentFriendlist.Count();
@@ -65,7 +61,7 @@ namespace SendToList
 
 			foreach (var friend in currentFriendlist)
 			{
-				if (MessagesToSaveList.AlreadySentMessage(_messageTemplate, friend.Id))
+				if (this.MessageCache.AlreadySentMessage(_messageTemplate, friend.Id))
 					continue;
 
 				string messageToCurrentFriend = _messageTemplate.Replace("<firstname>", friend.FirstName);
@@ -74,7 +70,7 @@ namespace SendToList
 
 				if (isSent)
 				{
-					MessagesToSaveList.Add(_messageTemplate, friend.Id);
+					this.MessageCache.Add(_messageTemplate, friend.Id);
 					sentCount++;
 					await this.UpdateMessagesSentCount();
 				}
@@ -99,6 +95,7 @@ namespace SendToList
 						Message = messageText,
 						UserId = userId,
 						Attachments = Attachments,
+						RandomId = VkApp.GetRandomId(),
 						CaptchaKey = AnticaptchaWorker.LastCaptcha,
 						CaptchaSid = AnticaptchaWorker.LastCaptchaSid,
 

@@ -14,7 +14,10 @@ namespace SendToList
 		[JsonIgnore]
 		private static MessageCache jsonMessageList;
 
-		private MessageCache() { { { { { { { } } } } } } }
+		private MessageCache(IList<JsonMessage> messages) 
+		{
+			this.Messages = messages;
+		}
 
 		public JsonMessage this[int index]
 		{
@@ -32,23 +35,15 @@ namespace SendToList
 			if (MessageCache.jsonMessageList != null)
 				return MessageCache.jsonMessageList;
 
-			IList<JsonMessage> messages;
-
 			if (File.Exists(fromFilename))
 			{
 				string fileText = File.ReadAllText(fromFilename);
-				messages = JsonConvert.DeserializeObject<MessageCache>(fileText).Messages;
-			}
-			else
-			{
-				messages = new List<JsonMessage>();
+				var messages = JsonConvert.DeserializeObject<MessageCache>(fileText).Messages;
+				MessageCache.jsonMessageList = new MessageCache(messages);
+				return MessageCache.jsonMessageList;
 			}
 
-			MessageCache.jsonMessageList = new MessageCache
-			{
-				Messages = messages
-			};
-
+			MessageCache.jsonMessageList = new MessageCache(new List<JsonMessage>());
 			return MessageCache.jsonMessageList;
 		}
 

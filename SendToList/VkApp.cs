@@ -10,9 +10,9 @@ namespace SendToList
 {
 	public static class VkApp
 	{
-		public static int AppID => 6427400;
-		public static string AppSecret => "N9v5eAzZcwb6W9GrH25g";
-		public static string Scope => "friends,users,photo,video,offline";
+		private const int AppID = 6427400;
+		public const string AppSecret = "N9v5eAzZcwb6W9GrH25g";
+		public const string Scope = "friends,users,photo,video,offline";
 
 		public static string AccessToken { get; private set; }
 		public static string Code { get; set; }
@@ -21,9 +21,13 @@ namespace SendToList
 
 		public static VkApi Api = new VkApi();
 
+		private static Random RandomGenerator = new Random();
+
 		public static VkCollection<VkNet.Model.FriendList> CurrentFriendlists { get; set; } = null;
 		public static IDictionary<long, List<VkNet.Model.User>> Friendlist { get; set; } = null;
 		public static IList<VkNet.Model.User> AllFriends { get; set; } = null;
+
+		public static int GetRandomId() => RandomGenerator.Next(int.MaxValue);
 
 		public static string Auth()
 		{

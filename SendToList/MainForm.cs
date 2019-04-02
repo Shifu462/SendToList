@@ -9,13 +9,20 @@ namespace SendToList
 {
 	public partial class MainForm : Form
 	{
-		public MainForm() => this.InitializeComponent();
+		private MessageCache MessageCache { get; }
 
-		private List<MediaAttachment> Attachments = new List<MediaAttachment>();
+		private List<MediaAttachment> Attachments { get; } = new List<MediaAttachment>();
 
 		private bool IsSending { get; set; } = false;
 
 		public bool IsListDistincted => this.checkExclude.Checked;
+
+		internal MainForm(MessageCache _messageCache)
+		{
+			this.MessageCache = _messageCache;
+			this.InitializeComponent();
+		}
+
 
 		private async void Main_Load(object sender, EventArgs e)
 		{

@@ -8,12 +8,10 @@ namespace SendToList
 		[STAThread]
 		private static void Main()
 		{
-			// Просто инициализируем этот чёртов синглтон пока не поздно.
-			MessageCache.Instance();
-
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
-			Application.Run(new MainForm());
+			
+			Application.Run(new MainForm( MessageCache.Instance() ));
 		}
 	}
 }
