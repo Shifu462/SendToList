@@ -1,139 +1,160 @@
 ﻿using System;
+using System.IO;
 using System.Windows.Forms;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using VkNet.Exception;
 using VkNet.Model.Attachments;
+using AnticaptchaApi;
+using System.Threading.Tasks;
 using System.Linq;
-using SendToList.Extensions;
 
 namespace SendToList
 {
-	public partial class MainForm : Form
-	{
-		private MessageCache MessageCache { get; }
+    public partial class MainForm : Form
+    {
+        public MainForm() => InitializeComponent();
 
-		private List<MediaAttachment> Attachments { get; } = new List<MediaAttachment>();
+        List<MediaAttachment> Attachments = new List<MediaAttachment>();
+        bool sending = false;
 
-		private bool IsSending { get; set; } = false;
+        public bool isListDistincted; // Equal at Load() to default checkbox.Checked value.
 
-		public bool IsListDistincted => this.checkExclude.Checked;
+        private async void btnSendToList_Click(object sender, EventArgs e)
+        {
+            if (sending)
+                return;
+            sending = true;
 
-		internal MainForm(MessageCache _messageCache)
-		{
-			this.MessageCache = _messageCache;
-			this.InitializeComponent();
-		}
+            int listIndex = lstFriendLists.GetSelectedId();
+            var chosenFriendList = Program.Friendlist[listIndex];
 
+            List<VkNet.Model.User> currentFriendList;
+            if (isListDistincted)
+            {
+                int excludeListId = lstExclude.GetSelectedId();
+                currentFriendList = chosenFriendList.ExcludeList(Program.Friendlist[excludeListId]).ToList();
+            }
+            else currentFriendList = chosenFriendList;
 
-		private async void Main_Load(object sender, EventArgs e)
-		{
-			bool anticaptchaInitialized = AnticaptchaWorker.TryInitialize();
+            await SendToListAsync(currentFriendList, sender as Button);
 
-			if (anticaptchaInitialized)
-				this.Text = $"Главная | Баланс: {AnticaptchaWorker.Api.GetBalance()}";
+            sending = false;
+        }
 
-			VkApp.Auth();
-			await WinFormsExt.LoadListsAsync();
+        private async void btnSendAll_Click(object sender, EventArgs e)
+        {
+            if (sending)
+                return;
+            sending = true;
 
-			foreach (var friendList in VkApp.CurrentFriendlists)
-			{
-				this.lstFriendLists.Items.Add($"{friendList.Id}: {friendList.Name}");
-				this.lstExclude.Items.Add($"{friendList.Id}: {friendList.Name}");
-			}
+            List<VkNet.Model.User> currentFriendList;
+            if (isListDistincted)
+            {
+                int excludedListId = lstExclude.GetSelectedId();
+                currentFriendList = Program.AllFriends.ExcludeList(Program.Friendlist[excludedListId]).ToList();
+            }
+            else currentFriendList = Program.AllFriends;
 
-			this.lstFriendLists.SetSelected(0, true);
+            await SendToListAsync(currentFriendList, sender as Button);
 
-			await this.UpdateMessagesSentCount();
-		}
+            sending = false;
+        }
 
-		private async void btnSendToList_Click(object sender, EventArgs e)
-		{
-			if (this.IsSending)
-				return;
+        private async void Main_Load(object sender, EventArgs e)
+        {
+            isListDistincted = checkExclude.Checked;
 
-			this.IsSending = true;
+            string anticaptchaKey = File.Exists("anticaptcha_key.txt") ?
+                File.ReadAllText("anticaptcha_key.txt") : "";
 
-			int listIndex = this.lstFriendLists.GetSelectedId();
-			var chosenFriendList = VkApp.Friendlist[listIndex];
+            if (anticaptchaKey != string.Empty)
+            {
+                Program.Anticaptcha = new AntiCaptcha(anticaptchaKey);
+                this.Text = $"Главная | Баланс: {Program.Anticaptcha.Balance}";
+            }
 
-			IList<VkNet.Model.User> currentFriendList;
-			if (this.IsListDistincted)
-			{
-				int excludeListId = this.lstExclude.GetSelectedId();
-				currentFriendList = chosenFriendList.ExcludeList(VkApp.Friendlist[excludeListId]).ToList();
-			}
-			else
-			{
-				currentFriendList = chosenFriendList;
-			}
+            Info.Auth();
+            await LoadListsAsync();
 
-			await this.SendToListAsync(currentFriendList, sender as Button);
+            foreach (var list in Program.CurrentFriendlists)
+            {
+                lstFriendLists.Items.Add($"{list.Id}: {list.Name}");
+                lstExclude.Items.Add(    $"{list.Id}: {list.Name}");
+            }
 
-			this.IsSending = false;
-		}
+            lstFriendLists.SetSelected(0, true);
 
-		private async void btnSendAll_Click(object sender, EventArgs e)
-		{
-			if (this.IsSending)
-				return;
+            await UpdateMessagesSentCount();
+        }
 
-			this.IsSending = true;
+        private async void ListFriendlists_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            lstFriendsInList.Items.Clear();
 
-			IList<VkNet.Model.User> currentFriendList;
-			if (this.IsListDistincted)
-			{
-				int excludedListId = this.lstExclude.GetSelectedId();
-				currentFriendList = VkApp.AllFriends.ExcludeList(VkApp.Friendlist[excludedListId]).ToList();
-			}
-			else
-				currentFriendList = VkApp.AllFriends;
+            var indexFriendist = int.Parse((lstFriendLists.SelectedItem as string).Split(':')[0]);
 
-			await this.SendToListAsync(currentFriendList, sender as Button);
+            foreach (var friend in Program.Friendlist[indexFriendist])
+                lstFriendsInList.Items.Add($"{friend.FirstName} {friend.LastName}");
 
-			this.IsSending = false;
-		}
+            await UpdateMessagesSentCount();
+        }
 
-		private async void ListFriendlists_SelectedIndexChanged(object sender, EventArgs e)
-		{
-			this.lstFriendsInList.Items.Clear();
+        private void btnAttach_Click(object sender, EventArgs e)
+        {
+            Attachments.Clear();
+            MatchCollection attachmentMatches = RegexAttachment.Matches(txtVideo.Text);
 
-			var indexFriendist = int.Parse((this.lstFriendLists.SelectedItem as string).Split(':')[0]);
+            foreach (Match match in attachmentMatches)
+            {
+                string type = match.Value.Substring(0, 5);
+                var attachParams = match.Value.Substring(5).Split('_');
 
-			foreach (var friend in VkApp.Friendlist[indexFriendist])
-				this.lstFriendsInList.Items.Add($"{friend.FirstName} {friend.LastName}");
+                MediaAttachment currentAttach = new Photo();
 
-			await this.UpdateMessagesSentCount();
-		}
+                switch (type)
+                {
+                    case "video":
+                        currentAttach = new Video();
+                        break;
 
-		private void btnAttach_Click(object sender, EventArgs e)
-		{
-			this.Attachments.Clear();
+                    case "photo": // currentAttach = new Photo();
+                        break;
 
-			var foundAttachments = StringExt.GetAttachmentsFromString(this.txtVideo.Text);
-			this.Attachments.AddRange(foundAttachments);
+                    default:
+                        MessageBox.Show("Ошибка! Неправильная ссылка. Номер: " + match.Index);
+                        return;
+                }
 
-			this.btnAttach.Text = $"Вложения: {this.Attachments.Count}";
-		}
+                currentAttach.OwnerId = int.Parse(attachParams[0]);
+                currentAttach.Id = int.Parse(attachParams[1]);
 
-		private async void checkExclude_CheckedChanged(object sender, EventArgs e)
-		{
-			this.lstExclude.Enabled = this.IsListDistincted;
-			await this.UpdateMessagesSentCount();
-		}
+                Attachments.Add(currentAttach);
+            }
 
-		private void lstExclude_EnabledChanged(object sender, EventArgs e)
-		{
-			if (this.lstExclude.Enabled && this.lstExclude.Items.Count != 0)
-				this.lstExclude.SetSelected(0, true);
-		}
+            btnAttach.Text = $"Вложения: {Attachments.Count}";
+        }
 
-		private async void txtMessage_TextChanged(object sender, EventArgs e)
-		{
-			await this.UpdateMessagesSentCount();
-		}
+        private async void checkExclude_CheckedChanged(object sender, EventArgs e)
+        {
+            isListDistincted = lstExclude.Enabled = !isListDistincted; // Invert All
+            await UpdateMessagesSentCount();
+        }
 
-		private async void lstExclude_SelectedIndexChanged(object sender, EventArgs e)
-		{
-			await this.UpdateMessagesSentCount();
-		}
-	}
+        private void lstExclude_EnabledChanged(object sender, EventArgs e)
+        {
+            if (lstExclude.Enabled && lstExclude.Items.Count != 0)
+                lstExclude.SetSelected(0, true);
+        }
+
+        private async void txtMessage_TextChanged(object sender, EventArgs e)
+        {
+            await UpdateMessagesSentCount();
+        }
+
+        private async void lstExclude_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            await UpdateMessagesSentCount();
+        }
+    }
 }
